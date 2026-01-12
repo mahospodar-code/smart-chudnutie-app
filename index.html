@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Chudnutie & Jedálniček 2026</title>
+    <meta name="description" content="Chytrá aplikácia pre výpočet kalórií a plánovanie jedálnička na mieru.">
+
+    <!-- PWA / Mobile Capable -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        sage: {
+                            50: '#f6f9f7',
+                            100: '#eef3ef',
+                            200: '#dce5de',
+                            300: '#bfd1c3',
+                            400: '#9cb6a2',
+                            500: '#7d9a84',
+                            600: '#637e6a',
+                            700: '#516556',
+                            800: '#425146',
+                            900: '#37433b',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .slide-up {
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+
+<body class="bg-sage-50 text-gray-800 min-h-screen relative overflow-x-hidden">
+
+    <!-- APP CONTAINER -->
+    <div id="app" class="max-w-md mx-auto bg-white min-h-screen shadow-2xl relative overflow-hidden flex flex-col">
+
+        <!-- HEADER -->
+        <header
+            class="p-6 bg-white z-10 sticky top-0 border-b border-sage-100 flex justify-between items-center transition-all bg-opacity-90 backdrop-blur-md"
+            id="mainHeader">
+            <div>
+                <h1 class="text-2xl font-bold text-sage-800 tracking-tight">Smart Chudnutie 2026</h1>
+                <p class="text-xs text-sage-500 uppercase tracking-wider font-semibold">Plánovač jedálnička</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="App.navigate('view-dashboard')" id="btn-home"
+                    class="hidden text-sage-400 hover:text-sage-600 transition-colors p-2 rounded-full hover:bg-sage-50">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                        </path>
+                    </svg>
+                </button>
+                <button onclick="resetApp()"
+                    class="text-sage-400 hover:text-sage-600 transition-colors p-2 rounded-full hover:bg-sage-50">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- VIEW: INPUT FORM -->
+        <div id="view-input" class="flex-1 p-6 flex flex-col justify-center slide-up">
+            <div class="space-y-6">
+                <!-- Gender -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Som</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer group">
+                            <input type="radio" name="gender" value="male" class="peer sr-only" checked>
+                            <div
+                                class="rounded-2xl border-2 border-sage-100 p-4 text-center peer-checked:border-sage-600 peer-checked:bg-sage-600 peer-checked:text-white transition-all group-hover:border-sage-300">
+                                <span class="text-2xl block mb-1">👨</span> Muž
+                            </div>
+                        </label>
+                        <label class="cursor-pointer group">
+                            <input type="radio" name="gender" value="female" class="peer sr-only">
+                            <div
+                                class="rounded-2xl border-2 border-sage-100 p-4 text-center peer-checked:border-sage-600 peer-checked:bg-sage-600 peer-checked:text-white transition-all group-hover:border-sage-300">
+                                <span class="text-2xl block mb-1">👩</span> Žena
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Metrics -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Vek</label>
+                        <input type="number" id="age"
+                            class="w-full rounded-xl border-2 border-sage-100 p-3 bg-sage-50 focus:bg-white focus:border-sage-600 focus:outline-none transition-all text-center text-lg font-bold"
+                            placeholder="30">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Výška (cm)</label>
+                        <input type="number" id="height"
+                            class="w-full rounded-xl border-2 border-sage-100 p-3 bg-sage-50 focus:bg-white focus:border-sage-600 focus:outline-none transition-all text-center text-lg font-bold"
+                            placeholder="175">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Hmotnosť (kg)</label>
+                    <input type="number" id="weight"
+                        class="w-full rounded-xl border-2 border-sage-100 p-3 bg-sage-50 focus:bg-white focus:border-sage-600 focus:outline-none transition-all text-center text-lg font-bold"
+                        placeholder="80">
+                </div>
+
+                <!-- Activity -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Aktivita</label>
+                    <select id="activity"
+                        class="w-full rounded-xl border-2 border-sage-100 p-4 bg-white focus:border-sage-600 focus:outline-none transition-all cursor-pointer">
+                        <option value="1.2">😴 Sedavá (žiadne cvičenie)</option>
+                        <option value="1.375" selected>🚶 Ľahká (1-3x týždenne)</option>
+                        <option value="1.55">🏃 Stredná (3-5x týždenne)</option>
+                        <option value="1.725">🏋️ Vysoká (6-7x týždenne)</option>
+                        <option value="1.9">🔥 Extrémna (2x denne)</option>
+                    </select>
+                </div>
+
+                <div class="pt-4">
+                    <button onclick="App.calculate()"
+                        class="w-full rounded-2xl bg-sage-800 py-4 text-lg font-bold text-white shadow-lg shadow-sage-200 hover:bg-sage-900 hover:shadow-xl hover:-translate-y-1 transition-all">
+                        Vypočítať Plán na rok 2026
+                    </button>
+                    <p class="text-center text-xs text-sage-400 mt-3">Vygeneruje unikátny jedálniček na 3 mesiace</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: DASHBOARD (Hidden) -->
+        <div id="view-dashboard" class="flex-1 hidden flex-col bg-sage-50 overflow-y-auto no-scrollbar pb-20 fade-in">
+            <!-- Stats Cards -->
+            <div class="p-6 bg-white rounded-b-3xl shadow-sm z-10 sticky top-0 transition-shadow" id="dash-stats">
+                <div class="flex justify-between items-end mb-4">
+                    <div>
+                        <div class="text-sm text-sage-500">Denný cieľ</div>
+                        <div class="text-4xl font-extrabold text-sage-800 leading-none" id="dash-target">--</div>
+                    </div>
+                    <button onclick="App.navigate('view-calendar')"
+                        class="bg-sage-100 text-sage-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-sage-200 transition-colors flex items-center">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                        Kalendár 2026
+                    </button>
+                </div>
+                <!-- Progress bar visualization -->
+                <div class="h-2 bg-sage-100 rounded-full overflow-hidden flex mb-2">
+                    <div class="bg-yellow-400 h-full w-[25%]"></div>
+                    <div class="bg-orange-400 h-full w-[10%]"></div>
+                    <div class="bg-green-500 h-full w-[35%]"></div>
+                    <div class="bg-orange-400 h-full w-[10%]"></div>
+                    <div class="bg-blue-500 h-full w-[20%]"></div>
+                </div>
+                <div class="text-xs text-center text-sage-400 font-medium">Dnešný náhľad (Vzorový deň)</div>
+            </div>
+
+            <!-- Meal Type Cards (Preview) -->
+            <div class="p-6 space-y-4">
+                <h3 class="font-bold text-sage-800 text-lg">Príklad menu na dnes</h3>
+                <div id="meal-cards-container" class="space-y-4"></div>
+            </div>
+        </div>
+
+        <!-- VIEW: CALENDAR 2026 -->
+        <div id="view-calendar" class="flex-1 hidden flex-col bg-white fade-in overflow-y-auto pb-20">
+            <div class="p-6">
+                <h2 class="text-xl font-bold text-sage-900 mb-6">Január - Marec 2026</h2>
+                <div id="calendar-grid" class="space-y-8">
+                    <!-- Months generated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: DAY DETAIL -->
+        <div id="view-day"
+            class="fixed inset-0 bg-white z-20 transform translate-x-full transition-transform duration-300 flex flex-col">
+            <header class="p-4 border-b border-sage-100 flex items-center bg-white sticky top-0 z-10">
+                <button onclick="App.navigate('view-calendar')"
+                    class="p-2 -ml-2 text-sage-600 hover:bg-sage-50 rounded-full">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                        </path>
+                    </svg>
+                </button>
+                <h2 class="text-lg font-bold text-sage-800 ml-2" id="day-title">1. Január 2026</h2>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-4 bg-sage-50 pb-20" id="day-container">
+                <!-- Meal items for specific day -->
+            </div>
+        </div>
+
+        <!-- VIEW: MODAL RECIPE DETAIL -->
+        <div id="view-detail"
+            class="fixed inset-0 bg-black/50 z-30 hidden backdrop-blur-sm transition-opacity opacity-0"
+            onclick="if(event.target === this) App.closeModal()">
+            <div class="bg-white absolute bottom-0 left-0 right-0 rounded-t-3xl h-[85vh] transform translate-y-full transition-transform duration-300 flex flex-col shadow-2xl"
+                id="detail-card">
+
+                <!-- Recipe Image Header -->
+                <div class="h-64 relative shrink-0">
+                    <img id="detail-img" src="" class="w-full h-full object-cover rounded-t-3xl">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    <button onclick="App.closeModal()"
+                        class="absolute top-4 right-4 bg-black/20 hover:bg-black/40 text-white p-2 rounded-full backdrop-blur-md transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                    <div class="absolute bottom-6 left-6 text-white">
+                        <span
+                            class="px-2 py-1 bg-white/20 backdrop-blur-md rounded text-xs font-bold uppercase tracking-wide mb-2 inline-block"
+                            id="detail-tag">Raňajky</span>
+                        <h2 class="text-2xl font-bold leading-tight" id="detail-title">Ovsená kaša</h2>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div class="flex-1 overflow-y-auto p-6 bg-white">
+                    <!-- Stats Row -->
+                    <div class="flex justify-between items-center mb-8 border-b border-sage-100 pb-6">
+                        <div class="text-center">
+                            <div class="text-xs text-sage-500 uppercase font-semibold">Kalórie</div>
+                            <div class="text-xl font-extrabold text-sage-800" id="detail-cals">--</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xs text-sage-500 uppercase font-semibold">Bielkoviny</div>
+                            <div class="text-xl font-bold text-sage-600" id="detail-p">--</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xs text-sage-500 uppercase font-semibold">Sacharidy</div>
+                            <div class="text-xl font-bold text-sage-600" id="detail-c">--</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xs text-sage-500 uppercase font-semibold">Tuky</div>
+                            <div class="text-xl font-bold text-sage-600" id="detail-f">--</div>
+                        </div>
+                    </div>
+
+                    <!-- Ingredients -->
+                    <div class="mb-8">
+                        <h3 class="font-bold text-lg text-sage-800 mb-4 flex items-center">Ingrediencie</h3>
+                        <ul class="space-y-3" id="detail-ingredients"></ul>
+                    </div>
+
+                    <!-- Instructions -->
+                    <div>
+                        <h3 class="font-bold text-lg text-sage-800 mb-4 flex items-center">Postup</h3>
+                        <div class="space-y-6 border-l-2 border-sage-100 pl-4 ml-2" id="detail-instructions"></div>
+                    </div>
+
+                    <div class="h-20"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIC -->
+    <script>
+        // --- RECIPE GENERATOR HELPER ---
+        const INGREDIENTS_DB = {
+            pro: ['Kuracie prsia', 'Losos', 'Tofu', 'Hovädzie', 'Tuniak', 'Vajcia', 'Grécky jogurt', 'Cottage cheese', 'Tvaroh', 'Šunka'],
+            carb: ['Ryža', 'Zemiaky', 'Ovsené vločky', 'Quinoa', 'Cestoviny celozrnné', 'Kuskus', 'Chlieb celozrnný', 'Batáty'],
+            fat: ['Avokádo', 'Orechy', 'Olivový olej', 'Semienka', 'Maslo', 'Kokosové mlieko'],
+            veg: ['Brokolica', 'Špenát', 'Paradajky', 'Paprika', 'Uhorka', 'Cuketa', 'Mrkva', 'Šalát']
+        };
+
+        function generateRecipes() {
+            const bases = [
+                // BREAKFAST (20)
+                { t: 'breakfast', n: "Ovsená kaša s ovocím", i: "oatmeal" }, { t: 'breakfast', n: "Praženica na cibuľke", i: "scrambled-eggs" },
+                { t: 'breakfast', n: "Omeleta so špenátom", i: "omelette" }, { t: 'breakfast', n: "Grécky jogurt s müsli", i: "yogurt" },
+                { t: 'breakfast', n: "Avokádový toast", i: "avocado-toast" }, { t: 'breakfast', n: "Lievance z banánu", i: "pancakes" },
+                { t: 'breakfast', n: "Smoothie bowl", i: "smoothie" }, { t: 'breakfast', n: "Varené vajcia s chlebom", i: "boiled-eggs" },
+                { t: 'breakfast', n: "Šunkový chlebík", i: "sandwich" }, { t: 'breakfast', n: "Tvarohová nátierka", i: "curd" },
+                { t: 'breakfast', n: "Chia puding", i: "chia" }, { t: 'breakfast', n: "Zapekané toasty", i: "toast" },
+                { t: 'breakfast', n: "Ryžová kaša", i: "rice-porridge" }, { t: 'breakfast', n: "Krupicová kaša light", i: "semolina" },
+                { t: 'breakfast', n: "Vaječné muffiny", i: "egg-muffins" }, { t: 'breakfast', n: "Francúzsky toast", i: "french-toast" },
+                { t: 'breakfast', n: "Biely jogurt s medom", i: "yogurt-honey" }, { t: 'breakfast', n: "Hemendex", i: "ham-eggs" },
+                { t: 'breakfast', n: "Fit palacinky", i: "crepes" }, { t: 'breakfast', n: "Celozrnná bagetka", i: "baguette" },
+
+                // SNACK (20)
+                { t: 'snack', n: "Jablko a mandle", i: "apple" }, { t: 'snack', n: "Proteínová tyčinka", i: "protein-bar" },
+                { t: 'snack', n: "Cottage cheese", i: "cottage" }, { t: 'snack', n: "Acidko", i: "kefir" },
+                { t: 'snack', n: "Mrkva s humusom", i: "hummus" }, { t: 'snack', n: "Hruška a orechy", i: "pear" },
+                { t: 'snack', n: "Ryžové chlebíky", i: "rice-cakes" }, { t: 'snack', n: "Varené vajce", i: "egg" },
+                { t: 'snack', n: "Kefírový nápoj", i: "drink" }, { t: 'snack', n: "Mozzarella guličky", i: "mozzarella" },
+                { t: 'snack', n: "Sušené mäso", i: "jerky" }, { t: 'snack', n: "Tvaroh s kakaom", i: "curd-cocoa" },
+                { t: 'snack', n: "Knackebrot so syrom", i: "crispbread" }, { t: 'snack', n: "Banán", i: "banana" },
+                { t: 'snack', n: "Hrozno a syr", i: "grapes" }, { t: 'snack', n: "Ovocný šalát", i: "fruit-salad" },
+                { t: 'snack', n: "Zeleninové tyčinky", i: "veg-sticks" }, { t: 'snack', n: "Jogurtový nápoj", i: "yogurt-drink" },
+                { t: 'snack', n: "Pražené mandle", i: "almonds" }, { t: 'snack', n: "Proteínový puding", i: "protein-pudding" },
+
+                // LUNCH (20)
+                { t: 'lunch', n: "Kuracie kari", i: "curry" }, { t: 'lunch', n: "Losos na masle", i: "salmon" },
+                { t: 'lunch', n: "Hovädzí steak", i: "steak" }, { t: 'lunch', n: "Tofu woz so zeleninou", i: "wok" },
+                { t: 'lunch', n: "Bolognese cestoviny", i: "pasta" }, { t: 'lunch', n: "Rizoto s hubami", i: "risotto" },
+                { t: 'lunch', n: "Pečené kura s ryžou", i: "roast-chicken" }, { t: 'lunch', n: "Šošovicový prívarok", i: "lentils" },
+                { t: 'lunch', n: "Morčacie prsia na šťave", i: "turkey" }, { t: 'lunch', n: "Segedín light", i: "goulash" },
+                { t: 'lunch', n: "Zapekaná brokolica", i: "broccoli" }, { t: 'lunch', n: "Tortilla s kuracím", i: "tortilla" },
+                { t: 'lunch', n: "Rybie filé na rasci", i: "fish" }, { t: 'lunch', n: "Hovädzie na hrášku", i: "beef-peas" },
+                { t: 'lunch', n: "Cícerové karí", i: "chickpea" }, { t: 'lunch', n: "Plnená paprika", i: "peppers" },
+                { t: 'lunch', n: "Grilovaný syr Halloumi", i: "halloumi" }, { t: 'lunch', n: "Kuskus s tuniakom", i: "couscous" },
+                { t: 'lunch', n: "Quinoa šalát", i: "quinoa" }, { t: 'lunch', n: "Lasagne (cuketa miesto cesta)", i: "lasagne" },
+
+                // DINNER (20) - Lighter
+                { t: 'dinner', n: "Tuniakový šalát", i: "tuna-salad" }, { t: 'dinner', n: "Grécky šalát", i: "greek-salad" },
+                { t: 'dinner', n: "Mozzarella Caprese", i: "caprese" }, { t: 'dinner', n: "Vaječná omeleta", i: "omelette-dinner" },
+                { t: 'dinner', n: "Grilovaná zelenina", i: "grilled-veg" }, { t: 'dinner', n: "Cézar šalát", i: "caesar" },
+                { t: 'dinner', n: "Pečená ryba", i: "baked-fish" }, { t: 'dinner', n: "Cuketové placky", i: "zucchini" },
+                { t: 'dinner', n: "Špenátový prívarok", i: "spinach" }, { t: 'dinner', n: "Šalát s kuracím mäsom", i: "chicken-salad" },
+                { t: 'dinner', n: "Hustá zeleninová polievka", i: "soup" }, { t: 'dinner', n: "Brokolicový krém", i: "soup-green" },
+                { t: 'dinner', n: "Šampiňóny na cibuľke", i: "mushrooms" }, { t: 'dinner', n: "Lečo s vajcom", i: "leco" },
+                { t: 'dinner', n: "Baklažán s parmezánom", i: "eggplant" }, { t: 'dinner', n: "Tofu šalát", i: "tofu-salad" },
+                { t: 'dinner', n: "Sardinková nátierka", i: "sardines" }, { t: 'dinner', n: "Cviklové carpaccio s kozím syrom", i: "beetroot" },
+                { t: 'dinner', n: "Dusená mrkva s vajcom", i: "carrot" }, { t: 'dinner', n: "Špargľa so slaninkou", i: "asparagus" }
+            ];
+
+            return bases.map((b, idx) => ({
+                id: `${b.t[0]}${idx}`,
+                type: b.t,
+                title: b.n,
+                img: b.i,
+                baseCals: b.t === 'snack' ? 200 : (b.t === 'lunch' ? 550 : 400),
+                items: [
+                    { n: "Hlavná zložka", g: 100 },
+                    { n: "Príloha/Zelenina", g: 150 },
+                    { n: "Dochucovadlo", g: 10 }
+                ],
+                steps: [
+                    "Pripravíme si všetky suroviny.",
+                    "Suroviny zmiešame alebo tepelne upravíme (varenie/pečenie/grilovanie) a zmiešame.",
+                    "Podávame čerstvé na tanieri."
+                ]
+            }));
+        }
+
+        let RECIPES = [];
+        try {
+            RECIPES = generateRecipes();
+        } catch (e) {
+            console.error("Failed to generate recipes:", e);
+        }
+
+        // --- STATE MANAGEMENT ---
+        const App = {
+            state: {
+                user: {},
+                plan: {},
+                calendar: {}, // '2026-01-01': { meals: { breakfast: {}, ... } }
+                viewDate: new Date(2026, 0, 1) // Start Jan 1 2026
+            },
+
+            calculate: function () {
+                try {
+                    const inputs = this.getInputs();
+                    if (!inputs) return;
+
+                    // Calc Logic
+                    const { gender, age, height, weight, activity } = inputs;
+                    let bmr = (10 * weight) + (6.25 * height) - (5 * age);
+                    bmr = (gender === 'male') ? bmr + 5 : bmr - 161;
+                    const tdee = Math.round(bmr * activity);
+                    let target = tdee - 642; // -15kg goal logic
+                    const min = (gender === 'male') ? 1500 : 1200;
+                    if (target < min) target = min;
+
+                    this.state.user = { ...inputs, bmr, tdee, target, bmi: weight / Math.pow(height / 100, 2) };
+
+                    // Meal Splits
+                    this.state.plan = {
+                        breakfast: Math.round(target * 0.25),
+                        snack1: Math.round(target * 0.10),
+                        lunch: Math.round(target * 0.35),
+                        snack2: Math.round(target * 0.10),
+                        dinner: Math.round(target * 0.20)
+                    };
+
+                    // GENERATE 90 DAY PLAN (Q1 2026)
+                    this.generateCalendarPlan();
+
+                    // UI Update
+                    this.updateDashboard();
+                    document.getElementById('btn-home').classList.remove('hidden');
+                    this.navigate('view-dashboard');
+                } catch (e) {
+                    alert("Chyba pri výpočte: " + e.message);
+                    console.error(e);
+                }
+            },
+
+            getInputs: function () {
+                const gender = document.querySelector('input[name="gender"]:checked').value;
+                const age = parseFloat(document.getElementById('age').value);
+                const height = parseFloat(document.getElementById('height').value);
+                const weight = parseFloat(document.getElementById('weight').value);
+                const activityVal = document.getElementById('activity').value;
+                const activity = parseFloat(activityVal);
+                if (!age || !height || !weight) { alert("Vyplňte všetky údaje!"); return null; }
+                return { gender, age, height, weight, activity };
+            },
+
+            generateCalendarPlan: function () {
+                // Shuffle Bag Algorithm for variety
+                const bags = {
+                    breakfast: this.createShuffleBag('breakfast'),
+                    snack: this.createShuffleBag('snack'),
+                    lunch: this.createShuffleBag('lunch'),
+                    dinner: this.createShuffleBag('dinner')
+                };
+
+                // Generate for Jan, Feb, Mar 2026 (approx 90 days)
+                const startDate = new Date(2026, 0, 1);
+                const endDate = new Date(2026, 3, 1); // April 1st excluded
+
+                // Loop 90 days
+                // Clone date to avoid infinite loop weirdness if not careful
+                let currentDate = new Date(startDate);
+
+                while (currentDate < endDate) {
+                    const dateKey = currentDate.toISOString().split('T')[0];
+
+                    this.state.calendar[dateKey] = {
+                        breakfast: this.drawFromBag(bags.breakfast),
+                        snack1: this.drawFromBag(bags.snack),
+                        lunch: this.drawFromBag(bags.lunch),
+                        snack2: this.drawFromBag(bags.snack),
+                        dinner: this.drawFromBag(bags.dinner)
+                    };
+
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+
+                this.renderCalendar();
+            },
+
+            createShuffleBag: function (type) {
+                const items = RECIPES.filter(r => r.type === type);
+                return { original: items, current: [...items] };
+            },
+
+            drawFromBag: function (bag) {
+                if (bag.current.length === 0) {
+                    bag.current = [...bag.original]; // Replenish
+                }
+                const idx = Math.floor(Math.random() * bag.current.length);
+                return bag.current.splice(idx, 1)[0];
+            },
+
+            // --- UI ---
+            updateDashboard: function () {
+                document.getElementById('dash-target').innerText = this.state.user.target;
+
+                // Show today's meal (Simulate Jan 1 2026)
+                const sampleDate = '2026-01-01';
+                this.renderMealCards(sampleDate, 'meal-cards-container');
+            },
+
+            renderMealCards: function (dateKey, containerId) {
+                const dayPlan = this.state.calendar[dateKey];
+                const container = document.getElementById(containerId);
+                container.innerHTML = '';
+
+                if (!dayPlan) return;
+
+                const structure = [
+                    { id: 'breakfast', title: 'Raňajky', color: 'border-yellow-400' },
+                    { id: 'snack1', title: 'Desiata', color: 'border-orange-400' },
+                    { id: 'lunch', title: 'Obed', color: 'border-green-500' },
+                    { id: 'snack2', title: 'Olovrant', color: 'border-orange-400' },
+                    { id: 'dinner', title: 'Večera', color: 'border-blue-500' },
+                ];
+
+                structure.forEach(slot => {
+                    const recipe = dayPlan[slot.id];
+                    const target = this.state.plan[slot.id];
+
+                    const div = document.createElement('div');
+                    div.className = `bg-white rounded-2xl p-4 border-l-8 ${slot.color} shadow-sm flex items-center gap-4 cursor-pointer hover:bg-sage-50 transition-colors`;
+                    div.onclick = () => this.openDetail(recipe, target, slot.title);
+
+                    div.innerHTML = `
+                        <img src="https://loremflickr.com/100/100/${recipe.img},food" class="w-14 h-14 rounded-xl object-cover bg-gray-200">
+                        <div class="flex-1">
+                            <div class="flex justify-between">
+                                <h4 class="font-bold text-gray-800">${slot.title}</h4>
+                                <span class="text-xs font-bold text-sage-600">${target} kcal</span>
+                            </div>
+                            <p class="text-sm text-gray-500 truncate">${recipe.title}</p>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            },
+
+            renderCalendar: function () {
+                const grid = document.getElementById('calendar-grid');
+                grid.innerHTML = '';
+
+                const months = ['Január', 'Február', 'Marec'];
+
+                months.forEach((mName, mIdx) => {
+                    const monthDiv = document.createElement('div');
+                    monthDiv.innerHTML = `<h3 class="font-bold text-lg text-sage-800 mb-2 sticky top-0 bg-white py-2">${mName}</h3>`;
+
+                    const daysGrid = document.createElement('div');
+                    daysGrid.className = 'grid grid-cols-7 gap-1';
+
+                    ['P', 'U', 'S', 'Š', 'P', 'S', 'N'].forEach(d => {
+                        daysGrid.innerHTML += `<div class="text-center text-xs text-sage-400 font-bold py-1">${d}</div>`;
+                    });
+
+                    const daysInMonth = new Date(2026, mIdx + 1, 0).getDate();
+                    let startOffset = new Date(2026, mIdx, 1).getDay(); // 0=Sun
+                    if (startOffset === 0) startOffset = 7;
+                    startOffset -= 1; // 0-based for Mon start
+
+                    for (let i = 0; i < startOffset; i++) {
+                        daysGrid.innerHTML += `<div></div>`;
+                    }
+
+                    for (let i = 1; i <= daysInMonth; i++) {
+                        const dateKey = `2026-${(mIdx + 1).toString().padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
+                        const btn = document.createElement('button');
+                        btn.className = `aspect-square rounded-lg flex items-center justify-center text-sm font-semibold hover:bg-sage-600 hover:text-white transition-colors bg-sage-50 text-sage-800`;
+                        btn.innerText = i;
+                        btn.onclick = () => this.openDay(dateKey, i, mName);
+                        daysGrid.appendChild(btn);
+                    }
+
+                    monthDiv.appendChild(daysGrid);
+                    grid.appendChild(monthDiv);
+                });
+            },
+
+            openDay: function (dateKey, dayNum, monthName) {
+                document.getElementById('day-title').innerText = `${dayNum}. ${monthName} 2026`;
+                this.renderMealCards(dateKey, 'day-container');
+
+                const view = document.getElementById('view-day');
+                view.classList.remove('translate-x-full');
+            },
+
+            navigate: function (viewId) {
+                ['view-input', 'view-dashboard', 'view-calendar'].forEach(id => {
+                    document.getElementById(id).classList.add('hidden');
+                });
+                document.getElementById('view-day').classList.add('translate-x-full');
+
+                const el = document.getElementById(viewId);
+                el.classList.remove('hidden');
+                el.classList.add('fade-in');
+            },
+
+            openDetail: function (recipe, targetCals, slotTitle) {
+                const ratio = targetCals / recipe.baseCals;
+
+                document.getElementById('detail-title').innerText = recipe.title;
+                document.getElementById('detail-tag').innerText = slotTitle;
+                document.getElementById('detail-img').src = `https://loremflickr.com/400/400/${recipe.img},food`;
+
+                const cals = Math.round(recipe.baseCals * ratio);
+                document.getElementById('detail-cals').innerText = cals;
+                document.getElementById('detail-p').innerText = Math.round(cals * 0.25 / 4) + 'g';
+                document.getElementById('detail-c').innerText = Math.round(cals * 0.45 / 4) + 'g';
+                document.getElementById('detail-f').innerText = Math.round(cals * 0.30 / 9) + 'g';
+
+                const ul = document.getElementById('detail-ingredients');
+                ul.innerHTML = '';
+                recipe.items.forEach(item => {
+                    const g = Math.round(item.g * ratio);
+                    ul.innerHTML += `<li class="flex justify-between border-b border-sage-50 pb-2"><span class="text-gray-600">${item.n}</span><span class="font-bold text-sage-700">${g}g</span></li>`;
+                });
+
+                const steps = document.getElementById('detail-instructions');
+                steps.innerHTML = '';
+                recipe.steps.forEach((s, i) => {
+                    steps.innerHTML += `<div class="flex gap-3"><div class="text-sage-400 font-bold">${i + 1}.</div><p class="text-sm text-gray-700">${s}</p></div>`;
+                });
+
+                const modal = document.getElementById('view-detail');
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    document.getElementById('detail-card').classList.remove('translate-y-full');
+                }, 10);
+            },
+
+            closeModal: function () {
+                const modal = document.getElementById('view-detail');
+                document.getElementById('detail-card').classList.add('translate-y-full');
+                modal.classList.add('opacity-0');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            }
+        };
+
+        function resetApp() {
+            if (confirm("Začať úplne odznovu?")) location.reload();
+        }
+    </script>
+</body>
+
+</html>
