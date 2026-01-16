@@ -14,6 +14,40 @@
     <link rel="apple-touch-icon" href="icon-192.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW Registered!', reg))
+                    .catch(err => console.log('SW Failed', err));
+            });
+        }
+
+
+
+        // PWA Install Logic
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const btn = document.getElementById('installAppBtn');
+            if (btn) btn.classList.remove('hidden');
+        });
+
+        window.addEventListener('load', () => {
+            const btn = document.getElementById('installAppBtn');
+            if (btn) {
+                btn.addEventListener('click', async () => {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        const { outcome } = await deferredPrompt.userChoice;
+                        deferredPrompt = null;
+                        btn.classList.add('hidden');
+                    }
+                });
+            }
+        });
+
         tailwind.config = {
             theme: {
                 extend: {
@@ -100,15 +134,22 @@
             </div>
             <div class="flex gap-2">
                 <button onclick="App.navigate('view-dashboard')" id="btn-home"
-                    class="hidden text-sage-400 hover:text-sage-600 transition-colors p-2 rounded-full hover:bg-sage-50">
+                    class="hidden text-sage-400 hover:text-sage-600 transition-colors p-3 rounded-full hover:bg-sage-50">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
                         </path>
                     </svg>
                 </button>
+                <button onclick="App.navigate('view-profile')" id="btn-profile"
+                    class="hidden text-sage-400 hover:text-sage-600 transition-colors p-3 rounded-full hover:bg-sage-50">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                </button>
                 <button onclick="resetApp()"
-                    class="text-sage-400 hover:text-sage-600 transition-colors p-2 rounded-full hover:bg-sage-50">
+                    class="text-sage-400 hover:text-sage-600 transition-colors p-3 rounded-full hover:bg-sage-50">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
@@ -186,6 +227,62 @@
                     <p class="text-center text-xs text-sage-400 mt-3">Vygeneruje unikátny jedálniček na 3 mesiace</p>
                 </div>
             </div>
+        </div>
+
+        <!-- VIEW: PROFILE -->
+        <div id="view-profile" class="flex-1 hidden flex-col bg-sage-50 fade-in p-6 overflow-y-auto pb-20">
+            <h2 class="text-2xl font-bold text-sage-900 mb-6">Môj Profil</h2>
+
+            <div class="bg-white rounded-2xl p-6 shadow-sm mb-6 space-y-4">
+                <div class="flex justify-between items-center border-b border-sage-50 pb-4">
+                    <span class="text-sage-500">BMI Index</span>
+                    <span class="text-2xl font-bold text-sage-800" id="prof-bmi">--</span>
+                </div>
+                <div class="flex justify-between items-center border-b border-sage-50 pb-4">
+                    <span class="text-sage-500">BMR (Metabolizmus)</span>
+                    <span class="text-xl font-bold text-sage-800" id="prof-bmr">--</span>
+                </div>
+                <div class="flex justify-between items-center border-b border-sage-50 pb-4">
+                    <span class="text-sage-500">TDEE (Výdaj)</span>
+                    <span class="text-xl font-bold text-sage-800" id="prof-tdee">--</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sage-500">Cieľ (Kalórie)</span>
+                    <span class="text-3xl font-extrabold text-green-600" id="prof-target">--</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-sm mb-6">
+                <h3 class="font-bold text-gray-800 mb-4">Moje parametre</h3>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <div class="text-sage-400">Vek</div>
+                        <div class="font-semibold" id="prof-age">--</div>
+                    </div>
+                    <div>
+                        <div class="text-sage-400">Výška</div>
+                        <div class="font-semibold" id="prof-height">--</div>
+                    </div>
+                    <div>
+                        <div class="text-sage-400">Hmotnosť</div>
+                        <div class="font-semibold" id="prof-weight">--</div>
+                    </div>
+                    <div>
+                        <div class="text-sage-400">Pohlavie</div>
+                        <div class="font-semibold" id="prof-gender">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="installAppBtn"
+                class="hidden w-full bg-sage-800 text-white font-bold py-4 mb-4 hover:bg-sage-900 rounded-xl transition-colors shadow-lg">
+                📲 Nainštalovať aplikáciu
+            </button>
+
+            <button onclick="resetApp()"
+                class="w-full text-red-500 font-semibold py-4 hover:bg-red-50 rounded-xl transition-colors">
+                Vymazať profil a začať znovu
+            </button>
         </div>
 
         <!-- VIEW: DASHBOARD (Hidden) -->
@@ -332,53 +429,93 @@
 
         function generateRecipes() {
             const bases = [
-                // BREAKFAST (20)
-                { t: 'breakfast', n: "Ovsená kaša s ovocím", i: "oatmeal" }, { t: 'breakfast', n: "Praženica na cibuľke", i: "scrambled-eggs" },
-                { t: 'breakfast', n: "Omeleta so špenátom", i: "omelette" }, { t: 'breakfast', n: "Grécky jogurt s müsli", i: "yogurt" },
-                { t: 'breakfast', n: "Avokádový toast", i: "avocado-toast" }, { t: 'breakfast', n: "Lievance z banánu", i: "pancakes" },
-                { t: 'breakfast', n: "Smoothie bowl", i: "smoothie" }, { t: 'breakfast', n: "Varené vajcia s chlebom", i: "boiled-eggs" },
-                { t: 'breakfast', n: "Šunkový chlebík", i: "sandwich" }, { t: 'breakfast', n: "Tvarohová nátierka", i: "curd" },
-                { t: 'breakfast', n: "Chia puding", i: "chia" }, { t: 'breakfast', n: "Zapekané toasty", i: "toast" },
-                { t: 'breakfast', n: "Ryžová kaša", i: "rice-porridge" }, { t: 'breakfast', n: "Krupicová kaša light", i: "semolina" },
-                { t: 'breakfast', n: "Vaječné muffiny", i: "egg-muffins" }, { t: 'breakfast', n: "Francúzsky toast", i: "french-toast" },
-                { t: 'breakfast', n: "Biely jogurt s medom", i: "yogurt-honey" }, { t: 'breakfast', n: "Hemendex", i: "ham-eggs" },
-                { t: 'breakfast', n: "Fit palacinky", i: "crepes" }, { t: 'breakfast', n: "Celozrnná bagetka", i: "baguette" },
+                // BREAKFAST
+                { t: 'breakfast', n: "Obilná kaša s bobuľovým ovocím", i: "oatmeal", d: [{ n: "Ovsené vločky", g: 60 }, { n: "Mlieko polotučné", g: 200 }, { n: "Lesné ovocie", g: 100 }, { n: "Med", g: 10 }] },
+                { t: 'breakfast', n: "Miešané vajíčka na masle s pažítkou", i: "scrambled-eggs", d: [{ n: "Vajcia (M)", g: 150 }, { n: "Maslo", g: 10 }, { n: "Celozrnný chlieb", g: 70 }, { n: "Pažítka", g: 5 }] },
+                { t: 'breakfast', n: "Špenátová omeleta so syrom", i: "omelette", d: [{ n: "Vajcia (M)", g: 150 }, { n: "Baby špenát", g: 30 }, { n: "Syr Eidam 30%", g: 30 }, { n: "Olej", g: 5 }] },
+                { t: 'breakfast', n: "Grécky jogurt s domácou granolou", i: "yogurt", d: [{ n: "Grécky jogurt 0%", g: 200 }, { n: "Granola", g: 50 }, { n: "Med", g: 10 }] },
+                { t: 'breakfast', n: "Kváskový chlieb s avokádom a vajíčkom", i: "avocado-toast", d: [{ n: "Kváskový chlieb", g: 70 }, { n: "Avokádo", g: 50 }, { n: "Vajce", g: 55 }] },
+                { t: 'breakfast', n: "Banánové lievance bez múky", i: "pancakes", d: [{ n: "Banán", g: 100 }, { n: "Vajce", g: 55 }, { n: "Olej", g: 5 }, { n: "Biely jogurt", g: 50 }] },
+                { t: 'breakfast', n: "Ovocné smoothie s proteínom", i: "smoothie", d: [{ n: "Proteín srvátkový", g: 30 }, { n: "Banán", g: 100 }, { n: "Mlieko", g: 200 }, { n: "Špenát", g: 20 }] },
+                { t: 'breakfast', n: "Varené vajcia s redkvičkou a chlebom", i: "boiled-eggs", d: [{ n: "Vajcia", g: 110 }, { n: "Reďkovka", g: 50 }, { n: "Chlieb", g: 70 }, { n: "Maslo", g: 10 }] },
+                { t: 'breakfast', n: "Sendvič so šunkou a syrom", i: "sandwich", d: [{ n: "Toastový chlieb celozrnný", g: 80 }, { n: "Šunka morčacia", g: 50 }, { n: "Syr 30%", g: 30 }, { n: "Maslo", g: 10 }] },
+                { t: 'breakfast', n: "Tvarohová nátierka s kôprom", i: "curd", d: [{ n: "Tvaroh jemný", g: 100 }, { n: "Jogurt biely", g: 30 }, { n: "Chlieb", g: 70 }, { n: "Cibuľka", g: 10 }] },
+                { t: 'breakfast', n: "Chia puding s kokosovým mliekom", i: "chia", d: [{ n: "Chia semienka", g: 30 }, { n: "Kokosové mlieko", g: 150 }, { n: "Med", g: 10 }, { n: "Ovocie", g: 50 }] },
+                { t: 'breakfast', n: "Celozrnné toasty so syrom", i: "toast", d: [{ n: "Toastový chlieb", g: 80 }, { n: "Syr Eidam", g: 40 }, { n: "Kecup (domáci)", g: 20 }] },
+                { t: 'breakfast', n: "Ryžová kaša s horkou čokoládou", i: "rice-porridge", d: [{ n: "Ryža (suchá)", g: 50 }, { n: "Mlieko", g: 200 }, { n: "Horká čokoláda 80%", g: 15 }] },
+                { t: 'breakfast', n: "Tvarohové halušky na sladko", i: "semolina", d: [{ n: "Tvaroh", g: 150 }, { n: "Krupica", g: 40 }, { n: "Vajce", g: 25 }, { n: "Strúhanka(opražená)", g: 10 }] },
+                { t: 'breakfast', n: "Vaječné muffiny so zeleninou", i: "egg-muffins", d: [{ n: "Vajcia", g: 110 }, { n: "Paprika", g: 30 }, { n: "Šunka", g: 30 }, { n: "Syr", g: 20 }] },
+                { t: 'breakfast', n: "Opečený chlieb vo vajci (fit verzia)", i: "french-toast", d: [{ n: "Chlieb celozrnný", g: 70 }, { n: "Vajce", g: 55 }, { n: "Mlieko", g: 30 }, { n: "Olej(spray)", g: 2 }] },
+                { t: 'breakfast', n: "Skyr s medom a orechmi", i: "yogurt-honey", d: [{ n: "Skyr biely", g: 200 }, { n: "Vlašské orechy", g: 20 }, { n: "Med", g: 10 }] },
+                { t: 'breakfast', n: "Hemendex so zeleninou", i: "ham-eggs", d: [{ n: "Šunka", g: 50 }, { n: "Vajcia", g: 110 }, { n: "Olej", g: 5 }, { n: "Paradajka", g: 50 }] },
+                { t: 'breakfast', n: "Palacinky s tvarohom", i: "crepes", d: [{ n: "Múka špaldová", g: 40 }, { n: "Mlieko", g: 100 }, { n: "Vajce", g: 25 }, { n: "Tvaroh", g: 80 }] },
+                { t: 'breakfast', n: "Bageta s tuniakovou pomazánkou", i: "baguette", d: [{ n: "Celozrnná bageta", g: 70 }, { n: "Tuniak vo vl. štave", g: 50 }, { n: "Lučina", g: 30 }, { n: "Cibuľka", g: 10 }] },
 
-                // SNACK (20)
-                { t: 'snack', n: "Jablko a mandle", i: "apple" }, { t: 'snack', n: "Proteínová tyčinka", i: "protein-bar" },
-                { t: 'snack', n: "Cottage cheese", i: "cottage" }, { t: 'snack', n: "Acidko", i: "kefir" },
-                { t: 'snack', n: "Mrkva s humusom", i: "hummus" }, { t: 'snack', n: "Hruška a orechy", i: "pear" },
-                { t: 'snack', n: "Ryžové chlebíky", i: "rice-cakes" }, { t: 'snack', n: "Varené vajce", i: "egg" },
-                { t: 'snack', n: "Kefírový nápoj", i: "drink" }, { t: 'snack', n: "Mozzarella guličky", i: "mozzarella" },
-                { t: 'snack', n: "Sušené mäso", i: "jerky" }, { t: 'snack', n: "Tvaroh s kakaom", i: "curd-cocoa" },
-                { t: 'snack', n: "Knackebrot so syrom", i: "crispbread" }, { t: 'snack', n: "Banán", i: "banana" },
-                { t: 'snack', n: "Hrozno a syr", i: "grapes" }, { t: 'snack', n: "Ovocný šalát", i: "fruit-salad" },
-                { t: 'snack', n: "Zeleninové tyčinky", i: "veg-sticks" }, { t: 'snack', n: "Jogurtový nápoj", i: "yogurt-drink" },
-                { t: 'snack', n: "Pražené mandle", i: "almonds" }, { t: 'snack', n: "Proteínový puding", i: "protein-pudding" },
+                // SNACK
+                { t: 'snack', n: "Jablko a hrsť mandlí", i: "apple", d: [{ n: "Jablko", g: 150 }, { n: "Mandle", g: 20 }] },
+                { t: 'snack', n: "Proteínová tyčinka (low sugar)", i: "protein-bar", d: [{ n: "Tyčinka", g: 50 }] },
+                { t: 'snack', n: "Cottage cheese s pažítkou", i: "cottage", d: [{ n: "Cottage cheese", g: 150 }, { n: "Zelenina", g: 100 }] },
+                { t: 'snack', n: "Pohár acidka", i: "kefir", d: [{ n: "Acidofilné mlieko", g: 250 }, { n: "Ľanové semienka", g: 5 }] },
+                { t: 'snack', n: "Mrkvové hranolky s cícerovým humusom", i: "hummus", d: [{ n: "Mrkva", g: 150 }, { n: "Hummus", g: 50 }] },
+                { t: 'snack', n: "Hruška a vlašské orechy", i: "pear", d: [{ n: "Hruška", g: 150 }, { n: "Orechy", g: 20 }] },
+                { t: 'snack', n: "Ryžové chlebíky s arašidovým maslom", i: "rice-cakes", d: [{ n: "Ryžové chlebíky", g: 30 }, { n: "Arašidové maslo", g: 20 }, { n: "Škorica", g: 1 }] },
+                { t: 'snack', n: "Varené vajce a uhorka", i: "egg", d: [{ n: "Vajce", g: 55 }, { n: "Uhorka šalátová", g: 150 }] },
+                { t: 'snack', n: "Kefírové smoothie", i: "drink", d: [{ n: "Kefír", g: 200 }, { n: "Lesné ovocie", g: 50 }] },
+                { t: 'snack', n: "Mozzarella guličky s cherry paradajkami", i: "mozzarella", d: [{ n: "Mozzarella light", g: 60 }, { n: "Paradajky", g: 100 }, { n: "Bazalka", g: 5 }] },
+                { t: 'snack', n: "Sušené hovädzie mäso", i: "jerky", d: [{ n: "Jerky", g: 30 }, { n: "Voda", g: 300 }] },
+                { t: 'snack', n: "Jemný tvaroh s kakaom", i: "curd-cocoa", d: [{ n: "Tvaroh jemný", g: 150 }, { n: "Kakao", g: 5 }, { n: "Sladidlo", g: 1 }] },
+                { t: 'snack', n: "Knackebrot s plátkom syra", i: "crispbread", d: [{ n: "Knackebrot", g: 30 }, { n: "Syr 30%", g: 30 }, { n: "Uhorka", g: 50 }] },
+                { t: 'snack', n: "Banán", i: "banana", d: [{ n: "Banán", g: 120 }] },
+                { t: 'snack', n: "Hrozno a kúsok ementálu", i: "grapes", d: [{ n: "Hrozno", g: 150 }, { n: "Syr Ementál", g: 30 }] },
+                { t: 'snack', n: "Čerstvý ovocný šalát", i: "fruit-salad", d: [{ n: "Jablko", g: 100 }, { n: "Pomaranč", g: 100 }, { n: "Orechy", g: 10 }] },
+                { t: 'snack', n: "Stopkový zeler s dipom", i: "veg-sticks", d: [{ n: "Zeler", g: 150 }, { n: "Biely jogurt", g: 100 }, { n: "Korenie", g: 2 }] },
+                { t: 'snack', n: "Biely jogurt", i: "yogurt-drink", d: [{ n: "Jogurt 3%", g: 150 }, { n: "Tekvicové semienka", g: 10 }] },
+                { t: 'snack', n: "Pražené mandle (nesolené)", i: "almonds", d: [{ n: "Mandle", g: 30 }] },
+                { t: 'snack', n: "Vanilkový proteínový puding", i: "protein-pudding", d: [{ n: "Puding (obchod)", g: 180 }] },
 
-                // LUNCH (20)
-                { t: 'lunch', n: "Kuracie kari", i: "curry" }, { t: 'lunch', n: "Losos na masle", i: "salmon" },
-                { t: 'lunch', n: "Hovädzí steak", i: "steak" }, { t: 'lunch', n: "Tofu woz so zeleninou", i: "wok" },
-                { t: 'lunch', n: "Bolognese cestoviny", i: "pasta" }, { t: 'lunch', n: "Rizoto s hubami", i: "risotto" },
-                { t: 'lunch', n: "Pečené kura s ryžou", i: "roast-chicken" }, { t: 'lunch', n: "Šošovicový prívarok", i: "lentils" },
-                { t: 'lunch', n: "Morčacie prsia na šťave", i: "turkey" }, { t: 'lunch', n: "Segedín light", i: "goulash" },
-                { t: 'lunch', n: "Zapekaná brokolica", i: "broccoli" }, { t: 'lunch', n: "Tortilla s kuracím", i: "tortilla" },
-                { t: 'lunch', n: "Rybie filé na rasci", i: "fish" }, { t: 'lunch', n: "Hovädzie na hrášku", i: "beef-peas" },
-                { t: 'lunch', n: "Cícerové karí", i: "chickpea" }, { t: 'lunch', n: "Plnená paprika", i: "peppers" },
-                { t: 'lunch', n: "Grilovaný syr Halloumi", i: "halloumi" }, { t: 'lunch', n: "Kuskus s tuniakom", i: "couscous" },
-                { t: 'lunch', n: "Quinoa šalát", i: "quinoa" }, { t: 'lunch', n: "Lasagne (cuketa miesto cesta)", i: "lasagne" },
+                // LUNCH
+                { t: 'lunch', n: "Krémové kuracie kari s ryžou", i: "curry", d: [{ n: "Kuracie prsia", g: 120 }, { n: "Ryža basmati(uvarená)", g: 150 }, { n: "Kokosové mlieko light", g: 100 }, { n: "Kari pasta", g: 10 }] },
+                { t: 'lunch', n: "Losos na masle s batátmi", i: "salmon", d: [{ n: "Filet z lososa", g: 120 }, { n: "Batáty", g: 200 }, { n: "Maslo", g: 10 }, { n: "Citrón", g: 20 }] },
+                { t: 'lunch', n: "Hovädzí steak so zelenými fazuľkami", i: "steak", d: [{ n: "Hovädzí steak", g: 120 }, { n: "Fazuľky", g: 150 }, { n: "Olej", g: 10 }, { n: "Zemiaky", g: 100 }] },
+                { t: 'lunch', n: "Tofu wok s čerstvou zeleninou", i: "wok", d: [{ n: "Tofu údené", g: 150 }, { n: "Zelenina mrazená", g: 200 }, { n: "Sojová omáčka", g: 10 }, { n: "Ryžové rezance", g: 50 }] },
+                { t: 'lunch', n: "Celozrnné cestoviny Bolognese", i: "pasta", d: [{ n: "Mleté hovädzie chudé", g: 100 }, { n: "Cestoviny celozrnné", g: 70 }, { n: "Paradajková omáčka", g: 150 }, { n: "Parmezán", g: 10 }] },
+                { t: 'lunch', n: "Krémové hubové rizoto", i: "risotto", d: [{ n: "Ryža arborio", g: 70 }, { n: "Huby", g: 100 }, { n: "Vývar", g: 200 }, { n: "Parmezán", g: 20 }, { n: "Maslo", g: 10 }] },
+                { t: 'lunch', n: "Pečené kuracie stehno s ryžou", i: "roast-chicken", d: [{ n: "Kuracie stehno", g: 150 }, { n: "Ryža", g: 150 }, { n: "Kompót", g: 50 }] },
+                { t: 'lunch', n: "Šošovicový prívarok s vajcom", i: "lentils", d: [{ n: "Šošovica", g: 80 }, { n: "Smotana 12%", g: 30 }, { n: "Vajce", g: 55 }, { n: "Chlieb", g: 50 }] },
+                { t: 'lunch', n: "Morčacie prsia na prírodno", i: "turkey", d: [{ n: "Morčacie", g: 120 }, { n: "Zemiaková kaša", g: 200 }, { n: "Olej", g: 5 }, { n: "Uhorkový šalát", g: 100 }] },
+                { t: 'lunch', n: "Segedínsky guláš (fit verzia)", i: "goulash", d: [{ n: "Bravčové stehno", g: 120 }, { n: "Kyslá kapusta", g: 150 }, { n: "Jogurt/Smotana", g: 50 }, { n: "Knedľa (celozrnná)", g: 100 }] },
+                { t: 'lunch', n: "Zapekaná brokolica so syrom a zemiakmi", i: "broccoli", d: [{ n: "Brokolica", g: 200 }, { n: "Zemiaky", g: 150 }, { n: "Syr Eidam", g: 40 }, { n: "Vajce", g: 25 }] },
+                { t: 'lunch', n: "Celozrnná tortilla s kuracím mäsom", i: "tortilla", d: [{ n: "Tortilla", g: 60 }, { n: "Kuracie prsia", g: 100 }, { n: "Zelenina", g: 100 }, { n: "Dresing", g: 20 }] },
+                { t: 'lunch', n: "Rybie filé na rasci so zemiakmi", i: "fish", d: [{ n: "Rybie filé", g: 150 }, { n: "Zemiaky varené", g: 200 }, { n: "Maslo", g: 10 }] },
+                { t: 'lunch', n: "Dusené hovädzie na hrášku", i: "beef-peas", d: [{ n: "Hovädzie zadné", g: 120 }, { n: "Hrášok", g: 100 }, { n: "Ryža", g: 150 }] },
+                { t: 'lunch', n: "Indické cícerové karí", i: "chickpea", d: [{ n: "Cícer (plechovka)", g: 200 }, { n: "Kokosové mlieko", g: 80 }, { n: "Ryža", g: 150 }, { n: "Špenát", g: 50 }] },
+                { t: 'lunch', n: "Plnená paprika v paradajkovej omáčke", i: "peppers", d: [{ n: "Paprika", g: 150 }, { n: "Mleté mäso", g: 80 }, { n: "Ryža", g: 30 }, { n: "Omáčka", g: 150 }, { n: "Zemiaky", g: 150 }] },
+                { t: 'lunch', n: "Grilovaný syr Halloumi so šalátom", i: "halloumi", d: [{ n: "Halloumi", g: 100 }, { n: "Zeleninový šalát", g: 200 }, { n: "Olej olivový", g: 5 }, { n: "Pečivo", g: 50 }] },
+                { t: 'lunch', n: "Kuskus s tuniakom a kukuricou", i: "couscous", d: [{ n: "Kuskus", g: 70 }, { n: "Tuniak", g: 80 }, { n: "Kukurica", g: 50 }, { n: "Zelenina", g: 50 }] },
+                { t: 'lunch', n: "Teplý šalát s quinoou a kuracím", i: "quinoa", d: [{ n: "Quinoa", g: 70 }, { n: "Kuracie prsia", g: 100 }, { n: "Brokolica", g: 100 }, { n: "Feta syr", g: 20 }] },
+                { t: 'lunch', n: "Cuketové lasagne", i: "lasagne", d: [{ n: "Cuketa", g: 200 }, { n: "Mleté mäso", g: 100 }, { n: "Paradajky", g: 100 }, { n: "Syr", g: 30 }] },
 
-                // DINNER (20) - Lighter
-                { t: 'dinner', n: "Tuniakový šalát", i: "tuna-salad" }, { t: 'dinner', n: "Grécky šalát", i: "greek-salad" },
-                { t: 'dinner', n: "Mozzarella Caprese", i: "caprese" }, { t: 'dinner', n: "Vaječná omeleta", i: "omelette-dinner" },
-                { t: 'dinner', n: "Grilovaná zelenina", i: "grilled-veg" }, { t: 'dinner', n: "Cézar šalát", i: "caesar" },
-                { t: 'dinner', n: "Pečená ryba", i: "baked-fish" }, { t: 'dinner', n: "Cuketové placky", i: "zucchini" },
-                { t: 'dinner', n: "Špenátový prívarok", i: "spinach" }, { t: 'dinner', n: "Šalát s kuracím mäsom", i: "chicken-salad" },
-                { t: 'dinner', n: "Hustá zeleninová polievka", i: "soup" }, { t: 'dinner', n: "Brokolicový krém", i: "soup-green" },
-                { t: 'dinner', n: "Šampiňóny na cibuľke", i: "mushrooms" }, { t: 'dinner', n: "Lečo s vajcom", i: "leco" },
-                { t: 'dinner', n: "Baklažán s parmezánom", i: "eggplant" }, { t: 'dinner', n: "Tofu šalát", i: "tofu-salad" },
-                { t: 'dinner', n: "Sardinková nátierka", i: "sardines" }, { t: 'dinner', n: "Cviklové carpaccio s kozím syrom", i: "beetroot" },
-                { t: 'dinner', n: "Dusená mrkva s vajcom", i: "carrot" }, { t: 'dinner', n: "Špargľa so slaninkou", i: "asparagus" }
+                // DINNER
+                { t: 'dinner', n: "Tuniakový šalát s vajcom", i: "tuna-salad", d: [{ n: "Tuniak", g: 80 }, { n: "Vajce", g: 55 }, { n: "Šalát mix", g: 150 }, { n: "Kukurica", g: 30 }] },
+                { t: 'dinner', n: "Pravý Grécky šalát s fetou", i: "greek-salad", d: [{ n: "Feta syr", g: 80 }, { n: "Uhorka", g: 100 }, { n: "Paradajka", g: 100 }, { n: "Olivy", g: 20 }, { n: "Olej", g: 5 }] },
+                { t: 'dinner', n: "Mozzarella Caprese s bazalkou", i: "caprese", d: [{ n: "Mozzarella", g: 100 }, { n: "Paradajky", g: 150 }, { n: "Bazalkové pesto", g: 10 }, { n: "Olivový olej", g: 5 }] },
+                { t: 'dinner', n: "Vaječná omeleta so šampiňónmi", i: "omelette-dinner", d: [{ n: "Vajcia", g: 150 }, { n: "Šampiňóny", g: 100 }, { n: "Olej", g: 5 }, { n: "Chlieb", g: 50 }] },
+                { t: 'dinner', n: "Grilovaná zelenina s parmezánom", i: "grilled-veg", d: [{ n: "Cuketa/Paprika/Baklažán", g: 300 }, { n: "Olej", g: 10 }, { n: "Parmezán", g: 30 }] },
+                { t: 'dinner', n: "Cézar šalát (bez krutónov)", i: "caesar", d: [{ n: "Rímsky šalát", g: 200 }, { n: "Kuracie prsia", g: 100 }, { n: "Parmezán", g: 20 }, { n: "Jogurtový dresing", g: 30 }] },
+                { t: 'dinner', n: "Pečená ryba so zeleninou", i: "baked-fish", d: [{ n: "Treska/Zubáč", g: 150 }, { n: "Koreňová zelenina", g: 200 }, { n: "Maslo", g: 10 }] },
+                { t: 'dinner', n: "Cuketové placky s jogurtovým dipom", i: "zucchini", d: [{ n: "Cuketa", g: 200 }, { n: "Vajce", g: 55 }, { n: "Múka/Vločky", g: 30 }, { n: "Dip", g: 50 }] },
+                { t: 'dinner', n: "Špenátový prívarok s volským okom", i: "spinach", d: [{ n: "Špenát mrazený", g: 150 }, { n: "Vajce (2ks)", g: 110 }, { n: "Smotana", g: 30 }, { n: "Zemiaky", g: 100 }] },
+                { t: 'dinner', n: "Miešaný šalát s grilovaným kuracím", i: "chicken-salad", d: [{ n: "Kuracie", g: 100 }, { n: "Zelenina mix", g: 200 }, { n: "Dresing", g: 20 }] },
+                { t: 'dinner', n: "Hustá zeleninová polievka", i: "soup", d: [{ n: "Zelenina (rôzna)", g: 300 }, { n: "Zemiak", g: 100 }, { n: "Olej", g: 5 }] },
+                { t: 'dinner', n: "Brokolicový krém (bez smotany)", i: "soup-green", d: [{ n: "Brokolica", g: 250 }, { n: "Zemiak", g: 100 }, { n: "Krutóny", g: 20 }] },
+                { t: 'dinner', n: "Restované šampiňóny na cibuľke", i: "mushrooms", d: [{ n: "Šampiňóny", g: 250 }, { n: "Olej/Maslo", g: 10 }, { n: "Toast", g: 50 }] },
+                { t: 'dinner', n: "Tradičné lečo s vajcom", i: "leco", d: [{ n: "Paprika/Paradajka", g: 250 }, { n: "Klobása (chudá)", g: 30 }, { n: "Vajce", g: 110 }] },
+                { t: 'dinner', n: "Pečený baklažán s parmezánom", i: "eggplant", d: [{ n: "Baklažán", g: 250 }, { n: "Pomodoro omáčka", g: 100 }, { n: "Parmezán", g: 30 }, { n: "Mozzarella", g: 30 }] },
+                { t: 'dinner', n: "Údené tofu so zeleninovým šalátom", i: "tofu-salad", d: [{ n: "Tofu údené", g: 180 }, { n: "Šalát", g: 150 }, { n: "Olej", g: 5 }] },
+                { t: 'dinner', n: "Sardinková nátierka so zeleninou", i: "sardines", d: [{ n: "Sardinky", g: 80 }, { n: "Lučina", g: 50 }, { n: "Zelenina", g: 100 }, { n: "Chlieb", g: 50 }] },
+                { t: 'dinner', n: "Cviklové carpaccio s kozím syrom", i: "beetroot", d: [{ n: "Cvikla uvarená", g: 200 }, { n: "Kozí syr", g: 50 }, { n: "Orechy", g: 10 }, { n: "Med", g: 5 }] },
+                { t: 'dinner', n: "Dusená mrkva na masle s vajcom", i: "carrot", d: [{ n: "Mrkva", g: 250 }, { n: "Maslo", g: 15 }, { n: "Vajce (2ks)", g: 110 }] },
+                { t: 'dinner', n: "Zelená špargľa so slaninkou", i: "asparagus", d: [{ n: "Špargľa", g: 200 }, { n: "Prosciutto/Slanina", g: 30 }, { n: "Parmezán", g: 20 }, { n: "Vajce", g: 55 }] }
             ];
 
             return bases.map((b, idx) => ({
@@ -387,15 +524,15 @@
                 title: b.n,
                 img: b.i,
                 baseCals: b.t === 'snack' ? 200 : (b.t === 'lunch' ? 550 : 400),
-                items: [
+                items: b.d || [
                     { n: "Hlavná zložka", g: 100 },
                     { n: "Príloha/Zelenina", g: 150 },
                     { n: "Dochucovadlo", g: 10 }
-                ],
+                ], // Placeholder - in real app would be specific per recipe
                 steps: [
-                    "Pripravíme si všetky suroviny.",
-                    "Suroviny zmiešame alebo tepelne upravíme (varenie/pečenie/grilovanie) a zmiešame.",
-                    "Podávame čerstvé na tanieri."
+                    `Pripravíme si suroviny na ${b.n.toLowerCase()}.`,
+                    "Suroviny očistíme, nakrájame a tepelne upravíme podľa potreby.",
+                    "Servírujeme čerstvé, dobrú chuť!"
                 ]
             }));
         }
@@ -407,13 +544,65 @@
             console.error("Failed to generate recipes:", e);
         }
 
-        // --- STATE MANAGEMENT ---
+        // --- STATE & APP ---
         const App = {
             state: {
                 user: {},
                 plan: {},
                 calendar: {}, // '2026-01-01': { meals: { breakfast: {}, ... } }
-                viewDate: new Date(2026, 0, 1) // Start Jan 1 2026
+                viewDate: new Date() // Will default to Today if possible
+            },
+
+            init: function () {
+                this.loadData();
+                const today = new Date();
+
+                // If we have a saved user, try to jump to today
+                if (this.state.user && this.state.user.target) {
+                    // Try to match Today with our calendar generation
+                    const todayKey = today.toISOString().split('T')[0];
+                    console.log("Checking for date:", todayKey);
+
+                    if (this.state.calendar[todayKey]) {
+                        // We have data for today!
+                        document.getElementById('view-input').classList.add('hidden');
+                        document.getElementById('btn-home').classList.remove('hidden');
+                        document.getElementById('btn-profile').classList.remove('hidden');
+                        this.updateDashboard(todayKey); // Force update to today
+                        this.navigate('view-dashboard');
+                        return;
+                    }
+
+                    // Fallback: If we have user but no calendar (expired?), regenerate?
+                    // For now just stay on dashboard if we have any data, or input if not.
+                    if (Object.keys(this.state.calendar).length > 0) {
+                        document.getElementById('view-input').classList.add('hidden');
+                        document.getElementById('btn-home').classList.remove('hidden');
+                        document.getElementById('btn-profile').classList.remove('hidden');
+                        this.updateDashboard();
+                        this.navigate('view-dashboard');
+                        return;
+                    }
+                }
+
+                // Default: Show input
+            },
+
+            saveData: function () {
+                try {
+                    localStorage.setItem('smartChudnutie_data', JSON.stringify(this.state));
+                } catch (e) { console.error("Save failed", e); }
+            },
+
+            loadData: function () {
+                try {
+                    const data = localStorage.getItem('smartChudnutie_data');
+                    if (data) {
+                        const parsed = JSON.parse(data);
+                        // Convert string dates back if needed, but we store keys as strings mostly
+                        this.state = parsed;
+                    }
+                } catch (e) { console.error("Load failed", e); }
             },
 
             calculate: function () {
@@ -441,12 +630,22 @@
                         dinner: Math.round(target * 0.20)
                     };
 
-                    // GENERATE 90 DAY PLAN (Q1 2026)
+                    // GENERATE 90 DAY PLAN (Q1 2026 + Current Time context)
                     this.generateCalendarPlan();
 
+                    // SAVE
+                    this.saveData();
+
                     // UI Update
-                    this.updateDashboard();
+                    // We want to show TODAY's plan immediately if possible
+                    const todayKey = new Date().toISOString().split('T')[0];
+                    if (this.state.calendar[todayKey]) {
+                        this.updateDashboard(todayKey);
+                    } else {
+                        this.updateDashboard(); // Fallback to first day
+                    }
                     document.getElementById('btn-home').classList.remove('hidden');
+                    document.getElementById('btn-profile').classList.remove('hidden');
                     this.navigate('view-dashboard');
                 } catch (e) {
                     alert("Chyba pri výpočte: " + e.message);
@@ -466,7 +665,6 @@
             },
 
             generateCalendarPlan: function () {
-                // Shuffle Bag Algorithm for variety
                 const bags = {
                     breakfast: this.createShuffleBag('breakfast'),
                     snack: this.createShuffleBag('snack'),
@@ -474,17 +672,18 @@
                     dinner: this.createShuffleBag('dinner')
                 };
 
-                // Generate for Jan, Feb, Mar 2026 (approx 90 days)
+                // Generate for ALL of 2026 to be safe, or start from "Today"
+                // Let's generate from Jan 1 2026 to Dec 31 2026 to cover "every day"
                 const startDate = new Date(2026, 0, 1);
-                const endDate = new Date(2026, 3, 1); // April 1st excluded
+                const endDate = new Date(2026, 11, 31);
 
-                // Loop 90 days
-                // Clone date to avoid infinite loop weirdness if not careful
                 let currentDate = new Date(startDate);
 
-                while (currentDate < endDate) {
+                while (currentDate <= endDate) {
                     const dateKey = currentDate.toISOString().split('T')[0];
 
+                    // Only generate if not exists (preserve history if we re-calc?)
+                    // No, "Calculate" implies new plan.
                     this.state.calendar[dateKey] = {
                         breakfast: this.drawFromBag(bags.breakfast),
                         snack1: this.drawFromBag(bags.snack),
@@ -495,8 +694,6 @@
 
                     currentDate.setDate(currentDate.getDate() + 1);
                 }
-
-                this.renderCalendar();
             },
 
             createShuffleBag: function (type) {
@@ -513,12 +710,48 @@
             },
 
             // --- UI ---
-            updateDashboard: function () {
+            updateDashboard: function (forceDateKey = null) {
                 document.getElementById('dash-target').innerText = this.state.user.target;
 
-                // Show today's meal (Simulate Jan 1 2026)
-                const sampleDate = '2026-01-01';
-                this.renderMealCards(sampleDate, 'meal-cards-container');
+                // Determine which date to show
+                let dateToShow = '2026-01-01'; // Default Fallback
+
+                if (forceDateKey) {
+                    dateToShow = forceDateKey;
+                } else {
+                    // Start with today logic
+                    const today = new Date().toISOString().split('T')[0];
+                    if (this.state.calendar[today]) {
+                        dateToShow = today;
+                    }
+                }
+
+                // Provide visual feedback of date
+                const dateObj = new Date(dateToShow);
+                const dayName = dateObj.getDate() + '. ' + (dateObj.getMonth() + 1) + '. 2026'; // Simple formatter
+
+                // Add a header to dashboard if missing?
+                // Currently "Dnešný náhľad (Vzorový deň)" is static. Let's make it dynamic?
+                // We'll update that div in strict mode below if possible, or just trusting renderMealCards logic
+
+                this.renderMealCards(dateToShow, 'meal-cards-container');
+
+                // Update the "Daily Preview" text
+                const previewTitle = document.querySelector('#dash-stats > div.text-xs.text-center');
+                if (previewTitle) previewTitle.innerText = `Plán pre: ${dayName}`;
+
+                // Update Profile View as well
+                if (this.state.user) {
+                    document.getElementById('prof-bmi').innerText = this.state.user.bmi ? this.state.user.bmi.toFixed(1) : '--';
+                    document.getElementById('prof-bmr').innerText = this.state.user.bmr;
+                    document.getElementById('prof-tdee').innerText = this.state.user.tdee;
+                    document.getElementById('prof-target').innerText = this.state.user.target;
+
+                    document.getElementById('prof-age').innerText = this.state.user.age + ' rokov';
+                    document.getElementById('prof-height').innerText = this.state.user.height + ' cm';
+                    document.getElementById('prof-weight').innerText = this.state.user.weight + ' kg';
+                    document.getElementById('prof-gender').innerText = this.state.user.gender === 'male' ? 'Muž' : 'Žena';
+                }
             },
 
             renderMealCards: function (dateKey, containerId) {
@@ -526,7 +759,10 @@
                 const container = document.getElementById(containerId);
                 container.innerHTML = '';
 
-                if (!dayPlan) return;
+                if (!dayPlan) {
+                    container.innerHTML = `<div class="text-center text-gray-400 py-4">Žiadny plán na deň ${dateKey}</div>`;
+                    return;
+                }
 
                 const structure = [
                     { id: 'breakfast', title: 'Raňajky', color: 'border-yellow-400' },
@@ -562,7 +798,7 @@
                 const grid = document.getElementById('calendar-grid');
                 grid.innerHTML = '';
 
-                const months = ['Január', 'Február', 'Marec'];
+                const months = ['Január', 'Február', 'Marec', 'Apríl']; // Show more months since we gen all year, but keep view simple
 
                 months.forEach((mName, mIdx) => {
                     const monthDiv = document.createElement('div');
@@ -587,7 +823,11 @@
                     for (let i = 1; i <= daysInMonth; i++) {
                         const dateKey = `2026-${(mIdx + 1).toString().padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
                         const btn = document.createElement('button');
-                        btn.className = `aspect-square rounded-lg flex items-center justify-center text-sm font-semibold hover:bg-sage-600 hover:text-white transition-colors bg-sage-50 text-sage-800`;
+                        // Highlight today?
+                        const isToday = (dateKey === new Date().toISOString().split('T')[0]);
+                        const bgClass = isToday ? 'bg-sage-800 text-white shadow-lg scale-110' : 'bg-sage-50 text-sage-800 hover:bg-sage-600 hover:text-white';
+
+                        btn.className = `aspect-square rounded-lg flex items-center justify-center text-sm font-semibold transition-all ${bgClass}`;
                         btn.innerText = i;
                         btn.onclick = () => this.openDay(dateKey, i, mName);
                         daysGrid.appendChild(btn);
@@ -607,7 +847,7 @@
             },
 
             navigate: function (viewId) {
-                ['view-input', 'view-dashboard', 'view-calendar'].forEach(id => {
+                ['view-input', 'view-dashboard', 'view-calendar', 'view-profile'].forEach(id => {
                     document.getElementById(id).classList.add('hidden');
                 });
                 document.getElementById('view-day').classList.add('translate-x-full');
@@ -660,8 +900,16 @@
         };
 
         function resetApp() {
-            if (confirm("Začať úplne odznovu?")) location.reload();
+            if (confirm("Začať úplne odznovu? Vymaže sa profil a plán.")) {
+                localStorage.removeItem('smartChudnutie_data');
+                location.reload();
+            }
         }
+
+        // --- AUTO START ---
+        window.onload = function () {
+            App.init();
+        };
     </script>
 </body>
 
